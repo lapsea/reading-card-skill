@@ -11,21 +11,19 @@ description: 将书名、封面、目录、电子书或书摘融合为内容丰�
 
 用户明确要求以下演示内容时，按名称直接交付对应 HTML；不重新萃取、渲染或改写它：
 
-- “演示深度萃取”：交付 [references/demo-deliberate-practice-v1.html](references/demo-deliberate-practice-v1.html)，即完整阅读版《刻意练习》V1。
+- “演示深度萃取”：交付 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)，即 9 页《刻意练习》深度萃取 demo。
 - “演示金句摘抄”：交付 [references/demo-quote-cards.html](references/demo-quote-cards.html)，即上下滑动的 8 条金句摘抄 demo。
-- 泛称“演示内容”“输出演示”或“查看演示成品”：交付 [references/demo-deliberate-practice.html](references/demo-deliberate-practice.html)，即当前 9 页的《刻意练习》V2 录屏展示版。
+- 泛称“演示内容”“输出演示”或“查看演示成品”：交付 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)。
 
 若用户在索取演示内容时同时提出明确的样式或文案修改，则以该演示文件为起点，只按所述范围修改后再交付。
 
-当前活动版本的独立副本是 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)。V2 将阅读路径压缩为“问题 → 区别 → 方法 → 行动 → 收束”，并带有只作用于演示文件的克制入场与封面浮动动效。
-
-[references/demo-deliberate-practice-v1.html](references/demo-deliberate-practice-v1.html) 是不可覆盖的视觉与内容基线；后续制作 V3 或更高版本时，只能修改活动演示文件，不得改写 V1。
+深度萃取 demo 仅保留 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)，它也是默认 demo。内容路径为“问题 → 区别 → 方法 → 行动 → 收束”，并带有克制的入场与封面浮动动效。
 
 ## 模式路由
 
 先判断用户要哪种产物，不要把两种模式混在一个 HTML 中：
 
-- **演示深度萃取**：直接交付完整阅读版《刻意练习》V1。
+- **演示深度萃取**：直接交付 9 页《刻意练习》V2。
 - **演示金句摘抄**：直接交付上下滑动的 8 条金句摘抄 demo。
 - **演示内容**：用户只要求查看或输出泛用演示时，直接交付 9 页《刻意练习》V2。
 - **模式 A｜深度萃取卡**：用户说“吃透一本书、拆书、深度阅读、知识萃取、做完整读书卡”等，执行完整知识萃取流程。

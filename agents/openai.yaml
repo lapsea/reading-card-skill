@@ -1,0 +1,5 @@
+interface:
+  display_name: "吃透一本书"
+  short_description: "生成手机端深度拆书卡或金句摘抄卡"
+  brand_color: "#3F7A54"
+  default_prompt: "使用 $extract-book-skill 帮我处理《书名》，融合书中内容与相关知识，生成内容丰富、只适配手机屏幕的深度读书卡或金句摘抄卡 HTML。"

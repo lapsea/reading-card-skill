@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f7f4eb" />
+<meta name="color-scheme" content="light" />
+<title>刻意练习 · 读书卡</title>
+<style>
+  :root {
+    --bg: #f7f4eb;
+    --surface: #fdfcf6;
+    --fg: #26281f;
+    --fg-body: color-mix(in oklch, var(--fg) 84%, var(--bg));
+    --muted: #676b5e;
+    --border: color-mix(in srgb, var(--fg) 15%, transparent);
+    --border-strong: color-mix(in srgb, var(--fg) 36%, transparent);
+    --accent: #b23a2d;
+    --accent-deep: color-mix(in oklch, var(--accent) 86%, black);
+    --stage: #181911;
+    --stage-lift: #23241c;
+    --font-display: Georgia, "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --gutter: clamp(22px, 6vw, 30px);
+    --ease: cubic-bezier(.32, .72, .22, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  img, svg { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+  .screen {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .screen.grabbing { user-select: none; -webkit-user-select: none; cursor: grabbing; }
+
+  .progress {
+    position: absolute;
+    z-index: 30;
+    top: max(0px, env(safe-area-inset-top, 0px));
+    left: 0; right: 0;
+    height: 2px;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+  }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .45s var(--ease); }
+
+  .reader-track {
+    display: flex;
+    height: 100%;
+    transform: translateX(calc(var(--page, 0) * -100%));
+    transition: transform .5s var(--ease);
+    will-change: transform;
+  }
+  .reader-track.dragging { transition: none; }
+
+  .page { position: relative; flex: 0 0 100%; width: 100%; height: 100%; overflow: hidden; }
+  .page-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: none;
+  }
+  .page-scroll::-webkit-scrollbar { display: none; }
+  .page-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100%;
+    padding: calc(max(0px, env(safe-area-inset-top, 0px)) + 26px) var(--gutter) calc(max(0px, env(safe-area-inset-bottom, 0px)) + 92px);
+  }
+
+  .page-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .page-no { font: italic 700 17px/1 var(--font-display); color: var(--accent); letter-spacing: .02em; }
+  .page-rule { flex: 1; height: 1px; background: var(--border); }
+  .page-sec { font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .24em; color: var(--muted); white-space: nowrap; }
+
+  .page-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 6.6vw, 30px);
+    font-weight: 700;
+    line-height: 1.34;
+    letter-spacing: .015em;
+    text-wrap: balance;
+  }
+
+  .prose { margin-top: 16px; display: grid; gap: 11px; }
+  .prose p { margin: 0; font-size: 14px; line-height: 1.76; letter-spacing: .014em; color: var(--fg-body); text-wrap: pretty; }
+
+  .highlight { margin: 22px 0 0; padding-top: 16px; border-top: 1px solid var(--border-strong); position: relative; }
+  .tick::before { content: ""; position: absolute; top: -1px; left: 0; width: 36px; height: 2px; background: var(--fg); }
+  .highlight blockquote { margin: 14px 0 0; }
+  .highlight blockquote, .highlight p {
+    margin: 14px 0 0;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.62;
+    letter-spacing: .02em;
+    color: var(--fg);
+    text-wrap: balance;
+  }
+
+  .entries { margin-top: 10px; }
+  .entry { display: grid; grid-template-columns: 40px 1fr; column-gap: 6px; padding: 14px 0; }
+  .entry + .entry { border-top: 1px solid var(--border); }
+  .entry-no { font: italic 700 16px/1.5 var(--font-display); color: var(--fg); padding-top: 2px; }
+  .entry-body h3 { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; line-height: 1.45; letter-spacing: .01em; }
+  .entry-body p { margin: 0; font-size: 12.8px; line-height: 1.62; color: var(--muted); text-wrap: pretty; }
+
+  .steps { list-style: none; margin: 20px 0 0; padding: 0; }
+  .step { position: relative; display: grid; grid-template-columns: 36px 1fr; column-gap: 14px; padding-bottom: 20px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 17.5px; top: 40px; bottom: 4px; width: 1px; background: var(--border-strong); }
+  .step:last-child::before { display: none; }
+  .step-dot {
+    position: relative; z-index: 1;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface);
+    display: grid; place-items: center;
+    font: italic 700 15px/1 var(--font-display);
+    color: var(--fg);
+  }
+  .step-body h3 { margin: 7px 0 4px; font-size: 14.5px; font-weight: 600; line-height: 1.45; letter-spacing: .01em; }
+  .step-body p { margin: 0; font-size: 12.8px; line-height: 1.62; color: var(--muted); text-wrap: pretty; }
+
+  .quote-detail { margin: 16px 0 0; font-size: 12.5px; line-height: 1.8; color: var(--muted); }
+  .quote-detail strong { color: var(--fg); font-weight: 600; }
+
+  .page-end { margin: auto 0 0; padding-top: 40px; text-align: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: .42em; text-indent: .42em; color: var(--muted); }
+
+  .cover-inner { padding-top: calc(max(0px, env(safe-area-inset-top, 0px)) + 22px); }
+  .cover-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .cover-top-label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .3em; color: var(--muted); white-space: nowrap; }
+  .cover-top-rule { flex: 1; height: 1px; background: var(--border); }
+  .cover-fig { margin: 0; display: flex; justify-content: center; }
+  .cover-img {
+    width: clamp(112px, 34vw, 136px);
+    height: auto;
+    aspect-ratio: 1080 / 1540;
+    border-radius: 2px 6px 6px 2px;
+    transform: rotate(-2.2deg);
+    box-shadow:
+      inset 6px 0 8px -6px color-mix(in srgb, black 45%, transparent),
+      0 22px 44px -18px color-mix(in srgb, var(--fg) 45%, transparent),
+      0 6px 14px -6px color-mix(in srgb, var(--fg) 22%, transparent);
+  }
+  .cover-fallback {
+    display: grid; place-items: center;
+    width: clamp(112px, 34vw, 136px); aspect-ratio: 1080 / 1540;
+    padding: 14px; border: 1px solid var(--border-strong); border-radius: 2px 6px 6px 2px;
+    transform: rotate(-2.2deg); background: var(--surface);
+    box-shadow: 0 22px 44px -18px color-mix(in srgb, var(--fg) 45%, transparent);
+    color: var(--accent); font: 700 22px/1.15 var(--font-display); text-align: center;
+  }
+  .cover-head { margin-top: 16px; text-align: center; }
+  .cover-title { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 8.5vw, 40px); font-weight: 700; line-height: 1.12; letter-spacing: .06em; text-indent: .06em; }
+  .cover-note { margin: 6px 0 0; font-family: var(--font-display); font-size: 13px; letter-spacing: .12em; text-indent: .12em; color: var(--muted); }
+  .cover-en { margin: 8px auto 0; max-width: 40ch; font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); text-wrap: balance; }
+  .cover-author { margin: 8px 0 0; font-size: 10px; letter-spacing: .02em; color: var(--muted); }
+  .cover-overview { margin: 12px 0 0; font-family: var(--font-display); font-size: 13px; line-height: 1.55; letter-spacing: .02em; color: var(--fg-body); text-wrap: pretty; }
+
+  .cover-promise { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--border-strong); position: relative; }
+  .cover-lead { margin: 14px 0 0; font-family: var(--font-display); font-size: 16.5px; font-weight: 600; line-height: 1.65; letter-spacing: .02em; text-wrap: balance; }
+  .take-label { margin: 22px 0 0; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .26em; color: var(--muted); }
+  .take-list { list-style: none; margin: 2px 0 0; padding: 0; }
+  .take-row { display: flex; align-items: baseline; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; font-weight: 600; letter-spacing: .02em; }
+  .take-row:last-child { border-bottom: 0; }
+  .take-no { font: italic 700 14px/1 var(--font-display); color: var(--fg); }
+
+  .cover-actions { margin-top: 12px; display: grid; justify-items: center; gap: 7px; }
+  .btn-start {
+    display: inline-flex; align-items: center; gap: 9px;
+    height: 40px; padding: 0 24px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 12px; font-weight: 600; letter-spacing: .16em; text-indent: .08em;
+    box-shadow: 0 14px 28px -12px color-mix(in srgb, var(--accent) 60%, transparent);
+    transition: background-color .18s ease, transform .18s ease;
+  }
+  .btn-start:hover { background: var(--accent-deep); }
+  .btn-start:active { transform: scale(.98); }
+  .btn-start svg { width: 15px; height: 15px; }
+  .cover-meta { margin: 0; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .16em; color: var(--muted); }
+
+  .pager {
+    position: absolute; z-index: 30;
+    left: 0; right: 0; bottom: 0;
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px calc(max(0px, env(safe-area-inset-bottom, 0px)) + 14px);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .pager::before { content: ""; position: absolute; top: 0; left: 18px; right: 18px; height: 1px; background: var(--border); }
+  .nav-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    display: grid; place-items: center;
+    color: var(--fg);
+    transition: background-color .16s ease, border-color .16s ease, opacity .16s ease;
+  }
+  .nav-btn svg { width: 17px; height: 17px; }
+  .nav-btn:hover:not(:disabled) { background: var(--surface); border-color: var(--fg); }
+  .nav-btn:disabled { opacity: .28; cursor: default; }
+  .pager-status { display: flex; align-items: baseline; justify-content: center; gap: 7px; min-width: 0; }
+  .status-now { font: italic 700 16px/1 var(--font-display); color: var(--accent); }
+  .status-rest { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+
+  @media (max-height: 700px) {
+    :root { --gutter: 18px; }
+    .page-inner { padding-top: calc(max(0px, env(safe-area-inset-top, 0px)) + 18px); padding-bottom: calc(max(0px, env(safe-area-inset-bottom, 0px)) + 72px); }
+    .page-head { margin-bottom: 12px; }
+    .page-title { font-size: 22px; line-height: 1.25; }
+    .prose { margin-top: 11px; gap: 7px; }
+    .prose p { font-size: 11.5px; line-height: 1.5; }
+    .highlight { margin-top: 12px; padding-top: 10px; }
+    .highlight blockquote, .highlight p { margin-top: 8px; font-size: 14px; line-height: 1.45; }
+    .entries { margin-top: 6px; }
+    .entry { grid-template-columns: 30px 1fr; padding: 8px 0; }
+    .entry-no { font-size: 13px; }
+    .entry-body h3 { margin-bottom: 2px; font-size: 12px; line-height: 1.35; }
+    .entry-body p { font-size: 10px; line-height: 1.4; }
+    .steps { margin-top: 12px; }
+    .step { grid-template-columns: 30px 1fr; column-gap: 10px; padding-bottom: 12px; }
+    .step::before { left: 14.5px; top: 34px; }
+    .step-dot { width: 30px; height: 30px; font-size: 12px; }
+    .step-body h3 { margin: 4px 0 2px; font-size: 12px; }
+    .step-body p { font-size: 10px; line-height: 1.4; }
+    .cover-inner { padding-top: calc(max(0px, env(safe-area-inset-top, 0px)) + 13px); }
+    .cover-top { margin-bottom: 7px; }
+    .cover-top-label { font-size: 8px; }
+    .cover-img, .cover-fallback { width: 90px; }
+    .cover-fallback { font-size: 16px; }
+    .cover-head { margin-top: 7px; }
+    .cover-title { font-size: 25px; }
+    .cover-note { margin-top: 3px; font-size: 10px; }
+    .cover-en { display: none; }
+    .cover-author { margin-top: 4px; font-size: 8.5px; }
+    .cover-overview { margin-top: 6px; font-size: 10.5px; line-height: 1.36; }
+    .cover-promise { margin-top: 18px; padding-top: 14px; }
+    .cover-lead { margin-top: 8px; font-size: 14px; line-height: 1.5; }
+    .take-label { margin-top: 14px; font-size: 9px; }
+    .take-list { margin-top: 2px; }
+    .take-row { gap: 10px; padding: 10px 0; font-size: 12.5px; line-height: 1.4; }
+    .take-no { font-size: 12px; }
+    .cover-actions { margin-top: 5px; gap: 3px; }
+    .btn-start { height: 31px; padding: 0 17px; font-size: 10px; }
+    .btn-start svg { width: 12px; height: 12px; }
+    .cover-meta { font-size: 7.5px; }
+    .pager { padding: 6px 14px calc(max(0px, env(safe-area-inset-bottom, 0px)) + 8px); }
+    .nav-btn { width: 38px; height: 38px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<main class="screen" id="screen" aria-label="多页读书卡" data-od-id="reader">
+  <div class="progress" aria-hidden="true" data-od-id="progress"><i id="progressFill"></i></div>
+  <div class="reader-track" id="readerTrack"></div>
+  <nav class="pager" aria-label="翻页" data-od-id="pager">
+    <button class="nav-btn" id="prevBtn" type="button" aria-label="上一页" title="上一页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <p class="pager-status" id="pageStatus" aria-live="polite"></p>
+    <button class="nav-btn" id="nextBtn" type="button" aria-label="下一页" title="下一页">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+  </nav>
+</main>
+<script>
+const BOOK_DATA = __BOOK_DATA__;
+document.documentElement.style.setProperty('--accent', BOOK_DATA.book.cover_color || '#b23a2d');
+const el = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = String(text);
+  return node;
+};
+const pageData = BOOK_DATA.pages || [];
+const total = pageData.length + 1;
+
+function coverPage(book) {
+  const page = el('section', 'page page-cover');
+  page.dataset.odId = 'page-cover';
+  page.setAttribute('aria-roledescription', '卡片');
+  page.setAttribute('aria-label', `第 1 页，共 ${total} 页：封面`);
+  const scroll = el('div', 'page-scroll');
+  const inner = el('div', 'page-inner cover-inner');
+
+  const top = el('div', 'cover-top');
+  top.append(el('span', 'cover-top-label', "READER'S CARD"));
+  top.append(el('span', 'cover-top-rule'));
+  inner.append(top);
+
+  const fig = el('figure', 'cover-fig');
+  if (book.cover_image) {
+    const img = el('img', 'cover-img');
+    img.src = book.cover_image;
+    img.alt = `《${book.title}》书籍封面`;
+    img.width = 820;
+    img.height = 1170;
+    img.draggable = false;
+    img.decoding = 'async';
+    fig.append(img);
+  } else {
+    fig.append(el('div', 'cover-fallback', book.title));
+  }
+  inner.append(fig);
+
+  const head = el('header', 'cover-head');
+  head.append(el('h1', 'cover-title', book.title));
+  if (book.cover_note) head.append(el('p', 'cover-note', book.cover_note));
+  if (book.cover_english) {
+    head.append(el('p', 'cover-en', `${book.cover_kicker || 'PEAK'} — ${book.cover_english}`));
+  }
+  if (book.author) head.append(el('p', 'cover-author', book.author));
+  inner.append(head);
+
+  if (book.overview) inner.append(el('p', 'cover-overview', book.overview));
+
+  const promise = el('section', 'cover-promise tick');
+  if (book.subtitle) promise.append(el('p', 'cover-lead', book.subtitle));
+  promise.append(el('p', 'take-label', '这次阅读，你会带走'));
+  const list = el('ol', 'take-list');
+  (book.cover_points || []).forEach((text, i) => {
+    const row = el('li', 'take-row');
+    row.append(el('span', 'take-no', String(i + 1).padStart(2, '0')));
+    row.append(el('span', 'take-text', text));
+    list.append(row);
+  });
+  promise.append(list);
+  inner.append(promise);
+
+  const actions = el('div', 'cover-actions');
+  const start = el('button', 'btn-start', '开始阅读');
+  start.type = 'button';
+  start.id = 'startBtn';
+  start.innerHTML = '<span>开始阅读</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  actions.append(start);
+  actions.append(el('p', 'cover-meta', `${pageData.length} 张知识卡 · 左右滑动翻页`));
+  inner.append(actions);
+
+  scroll.append(inner);
+  page.append(scroll);
+  return page;
+}
+
+function appendHighlight(wrap, text) {
+  if (!text) return;
+  const fig = el('figure', 'highlight tick');
+  fig.append(el('p', null, text));
+  wrap.append(fig);
+}
+
+function contentPage(p, no) {
+  const page = el('section', 'page');
+  page.dataset.odId = 'page-' + String(no).padStart(2, '0');
+  page.setAttribute('aria-roledescription', '卡片');
+  page.setAttribute('aria-label', `第 ${no} 页，共 ${total} 页：${p.title || p.section || ''}`);
+  const scroll = el('div', 'page-scroll');
+  const inner = el('div', 'page-inner');
+
+  const head = el('header', 'page-head');
+  head.append(el('span', 'page-no', String(no).padStart(2, '0')));
+  head.append(el('span', 'page-rule'));
+  head.append(el('span', 'page-sec', p.section || ''));
+  inner.append(head);
+  inner.append(el('h2', 'page-title', p.title));
+
+  if (p.type === 'statement') {
+    const prose = el('div', 'prose');
+    (p.body || []).forEach(text => prose.append(el('p', null, text)));
+    inner.append(prose);
+    appendHighlight(inner, p.highlight);
+  } else if (p.type === 'steps') {
+    const list = el('ol', 'steps');
+    (p.items || []).forEach((item, i) => {
+      const step = el('li', 'step');
+      step.append(el('span', 'step-dot', String(i + 1)));
+      const body = el('div', 'step-body');
+      body.append(el('h3', null, item.title));
+      body.append(el('p', null, item.body));
+      step.append(body);
+      list.append(step);
+    });
+    inner.append(list);
+    appendHighlight(inner, p.highlight);
+  } else if (p.type === 'quote') {
+    const fig = el('figure', 'highlight tick');
+    fig.append(el('blockquote', null, p.quote));
+    if (p.interpretation || p.scene) {
+      const detail = el('figcaption', 'quote-detail');
+      if (p.interpretation) detail.append(el('strong', null, '解读｜'), document.createTextNode(p.interpretation));
+      if (p.scene) detail.append(document.createElement('br'), el('strong', null, '用在｜'), document.createTextNode(p.scene));
+      fig.append(detail);
+    }
+    inner.append(fig);
+  } else {
+    const list = el('div', 'entries');
+    (p.items || []).forEach((item, i) => {
+      const row = el('div', 'entry');
+      row.append(el('span', 'entry-no', String(i + 1).padStart(2, '0')));
+      const body = el('div', 'entry-body');
+      body.append(el('h3', null, item.title));
+      body.append(el('p', null, item.body));
+      row.append(body);
+      list.append(row);
+    });
+    inner.append(list);
+    appendHighlight(inner, p.highlight);
+  }
+
+  if (no === total) inner.append(el('p', 'page-end', '完'));
+  scroll.append(inner);
+  page.append(scroll);
+  return page;
+}
+
+const track = document.getElementById('readerTrack');
+const screen = document.getElementById('screen');
+const fill = document.getElementById('progressFill');
+const btnPrev = document.getElementById('prevBtn');
+const btnNext = document.getElementById('nextBtn');
+const status = document.getElementById('pageStatus');
+const pages = [coverPage(BOOK_DATA.book), ...pageData.map((p, i) => contentPage(p, i + 2))];
+pages.forEach(page => track.append(page));
+document.title = `${BOOK_DATA.book.title} · 读书卡`;
+screen.setAttribute('aria-label', `《${BOOK_DATA.book.title}》读书卡`);
+
+let current = 0;
+function showPage(index) {
+  current = Math.max(0, Math.min(total - 1, index));
+  track.style.setProperty('--page', current);
+  fill.style.width = (total > 1 ? current / (total - 1) * 100 : 100) + '%';
+  status.replaceChildren(
+    el('span', 'status-now', String(current + 1).padStart(2, '0')),
+    el('span', 'status-rest', `/ ${total} · ${current === 0 ? '封面' : pageData[current - 1].section || ''}`)
+  );
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === total - 1;
+  pages.forEach((page, i) => {
+    const hidden = i !== current;
+    page.setAttribute('aria-hidden', String(hidden));
+    page.toggleAttribute('inert', hidden);
+  });
+}
+btnPrev.addEventListener('click', () => showPage(current - 1));
+btnNext.addEventListener('click', () => showPage(current + 1));
+document.getElementById('startBtn').addEventListener('click', () => showPage(1));
+
+let ptrId = null, startX = 0, startY = 0, startT = 0, decided = false, horiz = false;
+screen.addEventListener('pointerdown', event => {
+  if (ptrId !== null || event.target.closest('button, a')) return;
+  ptrId = event.pointerId;
+  startX = event.clientX;
+  startY = event.clientY;
+  startT = performance.now();
+  decided = false;
+  horiz = false;
+});
+screen.addEventListener('pointermove', event => {
+  if (event.pointerId !== ptrId) return;
+  const dx = event.clientX - startX;
+  const dy = event.clientY - startY;
+  if (!decided) {
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    decided = true;
+    horiz = Math.abs(dx) > Math.abs(dy) * 1.15;
+    if (horiz) {
+      screen.setPointerCapture?.(ptrId);
+      track.classList.add('dragging');
+      screen.classList.add('grabbing');
+    }
+  }
+  if (!horiz) return;
+  let offset = dx;
+  if ((current === 0 && dx > 0) || (current === total - 1 && dx < 0)) offset = dx / 3;
+  track.style.transform = `translateX(calc(var(--page) * -100% + ${offset}px))`;
+});
+function endPointer(event) {
+  if (event.pointerId !== ptrId) return;
+  const wasHoriz = horiz;
+  const dx = event.clientX - startX;
+  const dt = performance.now() - startT;
+  ptrId = null; decided = false; horiz = false;
+  track.classList.remove('dragging');
+  screen.classList.remove('grabbing');
+  track.style.transform = '';
+  if (!wasHoriz) return;
+  const flick = dt < 260 && Math.abs(dx) > 26;
+  if ((dx < -56 || (flick && dx < 0)) && current < total - 1) showPage(current + 1);
+  else if ((dx > 56 || (flick && dx > 0)) && current > 0) showPage(current - 1);
+  else showPage(current);
+}
+screen.addEventListener('pointerup', endPointer);
+screen.addEventListener('pointercancel', endPointer);
+
+let wheelAcc = 0, wheelLock = false;
+screen.addEventListener('wheel', event => {
+  if (Math.abs(event.deltaX) <= Math.abs(event.deltaY) * 1.4) { wheelAcc = 0; return; }
+  event.preventDefault();
+  if (wheelLock) return;
+  wheelAcc += event.deltaX;
+  if (Math.abs(wheelAcc) > 90) {
+    showPage(current + (wheelAcc > 0 ? 1 : -1));
+    wheelAcc = 0;
+    wheelLock = true;
+    setTimeout(() => { wheelLock = false; }, 480);
+  }
+}, { passive: false });
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft') { event.preventDefault(); showPage(current - 1); }
+  if (event.key === 'ArrowRight') { event.preventDefault(); showPage(current + 1); }
+  if (event.key === 'Home') { event.preventDefault(); showPage(0); }
+  if (event.key === 'End') { event.preventDefault(); showPage(total - 1); }
+});
+
+showPage(0);
+</script>
+</body>
+</html>

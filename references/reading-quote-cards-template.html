@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>摘句 · 读书金句卡</title>
+  <style>
+    :root {
+      --bg: #faf9f6;
+      --surface: #fffefb;
+      --fg: #2f2b27;
+      --muted: #77716b;
+      --border: #e9e5df;
+      --accent: #9b4637;
+      --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+      --fg-soft: color-mix(in oklch, var(--fg) 6%, transparent);
+      --muted-strong: color-mix(in oklch, var(--muted) 72%, var(--fg));
+      --font-display: 'Songti SC', 'STSong', 'Noto Serif SC', 'Noto Serif CJK SC', 'Source Han Serif SC', 'SimSun', 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.55;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::selection { background: var(--accent-soft); }
+    p, blockquote { margin: 0; }
+    .phone {
+      position: relative;
+      width: 100vw;
+      height: 100svh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .chrome {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: max(30px, env(safe-area-inset-left));
+      padding-right: max(30px, env(safe-area-inset-right));
+    }
+    .chrome-top { height: calc(60px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); border-bottom: 1px solid var(--border); }
+    .brand {
+      max-width: 68%;
+      overflow: hidden;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .top-meta { max-width: 30%; overflow: hidden; color: var(--muted-strong); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; white-space: nowrap; text-overflow: ellipsis; }
+    .chrome-bottom { height: calc(76px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); flex-direction: column; align-items: stretch; justify-content: center; gap: 12px; border-top: 1px solid var(--border); }
+    .rail { height: 2px; overflow: hidden; background: var(--border); }
+    .rail-fill { height: 100%; width: 0; background: var(--accent); transition: width .45s ease; }
+    .bottom-row { display: flex; align-items: center; justify-content: space-between; }
+    .counter, .hint { color: var(--muted-strong); font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; }
+    .counter { font-size: 12px; font-variant-numeric: tabular-nums; }
+    .deck { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    .deck::-webkit-scrollbar { display: none; }
+    .card {
+      position: relative;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 28px 30px 60px;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+    .ghost-num {
+      position: absolute;
+      top: 6px;
+      right: 22px;
+      color: color-mix(in oklch, var(--fg) 7%, transparent);
+      font-family: var(--font-mono);
+      font-size: clamp(72px, 22vw, 92px);
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      pointer-events: none;
+    }
+    .card-body { position: relative; }
+    .kicker { margin-bottom: 24px; color: var(--muted-strong); font-size: 13px; letter-spacing: .1em; }
+    .quote { max-width: 16em; font-family: var(--font-display); font-size: clamp(26px, 7.2vw, 33px); line-height: 1.62; letter-spacing: .02em; text-align: left; text-wrap: pretty; }
+    .card--xl .quote { font-size: clamp(31px, 8.8vw, 41px); line-height: 1.52; }
+    .card--sm .kicker { margin-bottom: 18px; }
+    .card--sm .quote { font-size: clamp(16px, 4.6vw, 21px); line-height: 1.65; }
+    .card--sm .src-rule { margin-top: 20px; }
+    .src-rule { width: 28px; height: 2px; margin: 28px 0 14px; border: 0; background: var(--accent); }
+    .locator { max-width: 32em; color: var(--muted); font-family: var(--font-body); font-size: 11px; line-height: 1.65; overflow-wrap: anywhere; }
+    .scroll-cue { position: absolute; right: 0; bottom: 14px; left: 0; color: var(--muted-strong); font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-align: center; transition: opacity .4s ease; }
+    .scroll-cue::after { display: block; margin-top: 3px; content: '⌄'; font-size: 17px; animation: cue-bob 1.9s ease-in-out infinite; }
+    @keyframes cue-bob { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(5px); opacity: 1; } }
+    .card:not(.is-active) .scroll-cue { opacity: 0; }
+    .js .rev { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s cubic-bezier(.22, .61, .36, 1); transition-delay: calc(var(--d, 0) * 110ms); }
+    .js .card.is-active .rev { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .js .rev { opacity: 1; transform: none; transition: none; }
+      .scroll-cue::after { animation: none; }
+      .rail-fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header class="chrome chrome-top">
+      <span class="brand" id="brand"></span>
+      <span class="top-meta" id="topMeta"></span>
+    </header>
+    <main class="deck" id="deck" aria-label="读书金句卡片，上下滑动翻页"></main>
+    <footer class="chrome chrome-bottom">
+      <div class="rail" aria-hidden="true"><div class="rail-fill" id="railFill"></div></div>
+      <div class="bottom-row">
+        <span class="counter" id="counter">00 / 00</span>
+        <span class="hint">上下滑动翻页</span>
+      </div>
+    </footer>
+  </div>
+  <script>
+    const QUOTE_DATA = __QUOTE_DATA__;
+    document.documentElement.classList.add('js');
+    const create = (tag, className, text) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined && text !== null) node.textContent = String(text);
+      return node;
+    };
+    const pad2 = number => String(number).padStart(2, '0');
+    const book = QUOTE_DATA.book;
+    document.title = `${book.title} · 摘句`;
+    document.documentElement.style.setProperty('--accent', book.accent || '#9b4637');
+    document.querySelector('#brand').textContent = `《${book.title}》`;
+    document.querySelector('#topMeta').textContent = book.meta || book.author;
+    const deck = document.querySelector('#deck');
+    function sizeClass(quote) {
+      if (quote.size && quote.size !== 'auto') return quote.size === 'normal' ? '' : `card--${quote.size}`;
+      const length = Array.from(quote.text).length;
+      if (length <= 28) return 'card--xl';
+      if (length > 58) return 'card--sm';
+      return '';
+    }
+    QUOTE_DATA.quotes.forEach((quote, index) => {
+      const card = create('section', `card ${sizeClass(quote)}`.trim());
+      card.setAttribute('aria-label', `第 ${index + 1} 条摘录`);
+      card.append(create('span', 'ghost-num', pad2(index + 1)));
+      card.lastElementChild.setAttribute('aria-hidden', 'true');
+      const body = create('div', 'card-body');
+      const source = create('p', 'kicker rev', quote.source);
+      source.style.setProperty('--d', '0');
+      const text = create('blockquote', 'quote rev', quote.text);
+      text.style.setProperty('--d', '1');
+      const rule = create('hr', 'src-rule rev');
+      rule.style.setProperty('--d', '2');
+      const locator = create('p', 'locator rev', [quote.locator, quote.url].filter(Boolean).join(' · '));
+      locator.style.setProperty('--d', '3');
+      body.append(source, text, rule, locator);
+      card.append(body);
+      if (index === 0 && QUOTE_DATA.quotes.length > 1) card.append(create('p', 'scroll-cue', '上滑翻页'));
+      deck.append(card);
+    });
+    const cards = Array.from(deck.querySelectorAll('.card'));
+    const railFill = document.querySelector('#railFill');
+    const counter = document.querySelector('#counter');
+    const storageKey = `quote.deck.${book.title}`;
+    let current = -1;
+    function setActive(index, save) {
+      if (index === current) return;
+      current = index;
+      cards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === index));
+      railFill.style.width = `${(index + 1) / cards.length * 100}%`;
+      counter.textContent = `${pad2(index + 1)} / ${pad2(cards.length)}`;
+      if (save) { try { localStorage.setItem(storageKey, String(current)); } catch (_) {} }
+    }
+    function currentIndex() {
+      const height = deck.clientHeight || 1;
+      return Math.max(0, Math.min(cards.length - 1, Math.round(deck.scrollTop / height)));
+    }
+    function goTo(index) {
+      const next = Math.max(0, Math.min(cards.length - 1, index));
+      deck.scrollTo({top: next * deck.clientHeight, behavior: 'smooth'});
+    }
+    let ticking = false;
+    deck.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; setActive(currentIndex(), true); });
+    }, {passive: true});
+    window.addEventListener('resize', () => { if (current >= 0) deck.scrollTop = current * deck.clientHeight; });
+    window.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') { event.preventDefault(); goTo(current + 1); }
+      else if (event.key === 'ArrowUp' || event.key === 'PageUp') { event.preventDefault(); goTo(current - 1); }
+      else if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+      else if (event.key === 'End') { event.preventDefault(); goTo(cards.length - 1); }
+    });
+    let saved = 0;
+    try { saved = parseInt(localStorage.getItem(storageKey), 10) || 0; } catch (_) {}
+    deck.scrollTop = Math.min(saved, cards.length - 1) * deck.clientHeight;
+    setActive(currentIndex(), false);
+  </script>
+</body>
+</html>

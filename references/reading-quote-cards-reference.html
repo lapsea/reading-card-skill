@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>摘句 · 读书金句卡</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.004 95);
+      --surface: oklch(100% 0.002 95);
+      --fg:      oklch(20% 0.018 70);
+      --muted:   oklch(48% 0.012 70);
+      --border:  oklch(90% 0.006 95);
+      --accent:  oklch(52% 0.10 28);
+
+      --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+      --fg-soft:     color-mix(in oklch, var(--fg) 6%, transparent);
+      --muted-strong: color-mix(in oklch, var(--muted) 72%, var(--fg));
+
+      --font-display: 'Songti SC', 'STSong', 'Noto Serif SC', 'Noto Serif CJK SC', 'Source Han Serif SC', 'SimSun', 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.55;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::selection { background: var(--accent-soft); }
+    p, blockquote { margin: 0; }
+
+    .phone {
+      position: relative;
+      margin-inline: auto;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    @media (min-width: 560px) {
+      body {
+        display: grid;
+        place-items: center;
+        padding: 28px;
+        background: color-mix(in oklch, var(--fg) 4%, var(--bg));
+      }
+      .phone {
+        width: 420px;
+        max-width: none;
+        height: min(880px, calc(100dvh - 56px));
+        border: 1px solid var(--border);
+        background: var(--bg);
+      }
+    }
+
+    .chrome {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-inline: 30px;
+    }
+    .chrome-top {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.34em;
+      margin-right: -0.34em;
+    }
+    .top-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--muted-strong);
+    }
+
+    .chrome-bottom {
+      height: 76px;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .rail {
+      height: 2px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .rail-fill {
+      height: 100%;
+      width: 12.5%;
+      background: var(--accent);
+      transition: width 0.45s ease;
+    }
+    .bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .counter {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--muted-strong);
+      font-variant-numeric: tabular-nums;
+    }
+    .hint {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--muted-strong);
+    }
+
+    .deck {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+    .deck::-webkit-scrollbar { display: none; }
+
+    .card {
+      position: relative;
+      min-height: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 28px 30px 60px;
+    }
+    @media (min-width: 560px) {
+      .card { padding: 32px 42px 64px; }
+    }
+
+    .ghost-num {
+      position: absolute;
+      top: 6px;
+      right: 22px;
+      font-family: var(--font-mono);
+      font-size: clamp(72px, 22vw, 92px);
+      line-height: 1;
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      color: color-mix(in oklch, var(--fg) 7%, transparent);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .card-body { position: relative; }
+    .kicker {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      color: var(--muted-strong);
+      margin-bottom: 24px;
+    }
+    .quote {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 7.2vw, 33px);
+      line-height: 1.62;
+      letter-spacing: 0.02em;
+      max-width: 16em;
+    }
+    .card--xl .quote {
+      font-size: clamp(31px, 8.8vw, 41px);
+      line-height: 1.52;
+    }
+    .card--sm .quote {
+      font-size: clamp(19px, 5.6vw, 25px);
+      line-height: 1.72;
+    }
+    .quote {
+      text-align: left;
+      text-wrap: pretty;
+    }
+
+    .src-rule {
+      width: 28px;
+      height: 2px;
+      border: 0;
+      background: var(--accent);
+      margin: 28px 0 16px;
+    }
+    .scroll-cue {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--muted-strong);
+      transition: opacity 0.4s ease;
+    }
+    .scroll-cue svg {
+      display: block;
+      margin: 8px auto 0;
+      animation: cue-bob 1.9s ease-in-out infinite;
+    }
+    @keyframes cue-bob {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50% { transform: translateY(5px); opacity: 1; }
+    }
+    .card:not(.is-active) .scroll-cue { opacity: 0; }
+
+    .js .rev {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+      transition-delay: calc(var(--d, 0) * 110ms);
+    }
+    .js .card.is-active .rev { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .js .rev { transition: none; transform: none; opacity: 1; }
+      .scroll-cue svg { animation: none; }
+      .rail-fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header class="chrome chrome-top" data-od-id="app-header">
+      <span class="brand">《九月来信》</span>
+      <span class="top-meta">9月 · 2026</span>
+    </header>
+
+    <main class="deck" id="deck" aria-label="读书金句卡片，上下滑动翻页">
+      <section class="card card--xl" data-od-id="card-01">
+        <span class="ghost-num" aria-hidden="true">01</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第一封信</p>
+          <blockquote class="quote rev" style="--d:1">九月的风比八月诚实，它不再讨好谁，只是路过。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+        <p class="scroll-cue" aria-hidden="true">上滑翻页
+          <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l6 6 6-6" /></svg>
+        </p>
+      </section>
+
+      <section class="card" data-od-id="card-02">
+        <span class="ghost-num" aria-hidden="true">02</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第二封信</p>
+          <blockquote class="quote rev" style="--d:1">写信的人都知道，慢一点没有关系，慢一点，话才能稳稳落到纸上。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card" data-od-id="card-03">
+        <span class="ghost-num" aria-hidden="true">03</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第三封信</p>
+          <blockquote class="quote rev" style="--d:1">南方的夏天总是不肯走，像一句说了很久、还没说完的再见。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card" data-od-id="card-04">
+        <span class="ghost-num" aria-hidden="true">04</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第四封信</p>
+          <blockquote class="quote rev" style="--d:1">黄昏的光是旧的，落在身上，像多年前有人替你披上的外套。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card" data-od-id="card-05">
+        <span class="ghost-num" aria-hidden="true">05</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第五封信</p>
+          <blockquote class="quote rev" style="--d:1">我们总以为日子很长。其实日子只是很多，长的是想念。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card" data-od-id="card-06">
+        <span class="ghost-num" aria-hidden="true">06</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第六封信</p>
+          <blockquote class="quote rev" style="--d:1">在站台上看多了告别，就学会了把要说的话，说得短一些。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card" data-od-id="card-07">
+        <span class="ghost-num" aria-hidden="true">07</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第七封信</p>
+          <blockquote class="quote rev" style="--d:1">天黑下来的时候别慌，灯一盏一盏亮起来，总有一盏是等你回家的。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+
+      <section class="card card--sm" data-od-id="card-08">
+        <span class="ghost-num" aria-hidden="true">08</span>
+        <div class="card-body">
+          <p class="kicker rev" style="--d:0">阿禾 · 第八封信</p>
+          <blockquote class="quote rev" style="--d:1">如果生活偶尔沉默，你别急着追问。它只是在替你攒着，攒一句足够好的消息，等一个像九月这样不冷不热、有风也有灯的日子，再轻轻说给你听。</blockquote>
+          <hr class="src-rule rev" style="--d:2" />
+        </div>
+      </section>
+    </main>
+
+    <footer class="chrome chrome-bottom" data-od-id="app-progress">
+      <div class="rail" aria-hidden="true"><div class="rail-fill" id="railFill"></div></div>
+      <div class="bottom-row">
+        <span class="counter" id="counter">01 / 08</span>
+        <span class="hint">上下滑动翻页</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    document.documentElement.classList.add('js');
+
+    var deck = document.getElementById('deck');
+    var cards = Array.prototype.slice.call(deck.querySelectorAll('.card'));
+    var railFill = document.getElementById('railFill');
+    var counterEl = document.getElementById('counter');
+    var STORAGE_KEY = 'zhaiju.deck.position';
+    var current = -1;
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function setActive(i, save) {
+      if (i === current) return;
+      current = i;
+      cards.forEach(function (card, idx) {
+        card.classList.toggle('is-active', idx === i);
+      });
+      railFill.style.width = ((i + 1) / cards.length * 100) + '%';
+      counterEl.textContent = pad2(i + 1) + ' / ' + pad2(cards.length);
+      if (save) store();
+    }
+
+    function currentIdx() {
+      var h = deck.clientHeight || 1;
+      return Math.max(0, Math.min(cards.length - 1, Math.round(deck.scrollTop / h)));
+    }
+
+    function goTo(i) {
+      i = Math.max(0, Math.min(cards.length - 1, i));
+      deck.scrollTo({ top: i * deck.clientHeight, behavior: 'smooth' });
+    }
+
+    function store() {
+      try { localStorage.setItem(STORAGE_KEY, String(current)); } catch (e) {}
+    }
+
+    function restore() {
+      var saved = 0;
+      try { saved = parseInt(localStorage.getItem(STORAGE_KEY), 10) || 0; } catch (e) {}
+      if (saved > 0) {
+        deck.scrollTop = Math.min(saved, cards.length - 1) * deck.clientHeight;
+      }
+      setActive(currentIdx(), false);
+    }
+
+    var ticking = false;
+    deck.addEventListener('scroll', function () {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(function () {
+          ticking = false;
+          setActive(currentIdx(), true);
+        });
+      }
+    }, { passive: true });
+
+    window.addEventListener('resize', function () {
+      if (current >= 0) deck.scrollTop = current * deck.clientHeight;
+    });
+
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goTo(current + 1); }
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); goTo(current - 1); }
+      else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+      else if (e.key === 'End') { e.preventDefault(); goTo(cards.length - 1); }
+    });
+
+    restore();
+  </script>
+</body>
+</html>

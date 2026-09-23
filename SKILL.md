@@ -11,21 +11,21 @@ description: 将书名、封面、目录、电子书或书摘融合为内容丰�
 
 用户明确要求以下演示内容时，按名称直接交付对应 HTML；不重新萃取、渲染或改写它：
 
-- “演示深度萃取”：交付 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)，即 9 页《刻意练习》深度萃取 demo。
+- “演示深度萃取”：交付 [references/demo-deliberate-practice.html](references/demo-deliberate-practice.html)，即 9 页《刻意练习》深度萃取 demo。
 - “演示金句摘抄”：交付 [references/demo-quote-cards.html](references/demo-quote-cards.html)，即上下滑动的 8 条金句摘抄 demo。
-- 泛称“演示内容”“输出演示”或“查看演示成品”：交付 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)。
+- 泛称“演示内容”“输出演示”或“查看演示成品”：交付 [references/demo-deliberate-practice.html](references/demo-deliberate-practice.html)。
 
 若用户在索取演示内容时同时提出明确的样式或文案修改，则以该演示文件为起点，只按所述范围修改后再交付。
 
-深度萃取 demo 仅保留 [references/demo-deliberate-practice-v2.html](references/demo-deliberate-practice-v2.html)，它也是默认 demo。内容路径为“问题 → 区别 → 方法 → 行动 → 收束”，并带有克制的入场与封面浮动动效。
+深度萃取 demo 仅保留 [references/demo-deliberate-practice.html](references/demo-deliberate-practice.html)，它也是默认 demo。内容路径为“问题 → 区别 → 方法 → 行动 → 收束”，并带有克制的入场与封面浮动动效。
 
 ## 模式路由
 
 先判断用户要哪种产物，不要把两种模式混在一个 HTML 中：
 
-- **演示深度萃取**：直接交付 9 页《刻意练习》V2。
+- **演示深度萃取**：直接交付 9 页《刻意练习》深度萃取 demo。
 - **演示金句摘抄**：直接交付上下滑动的 8 条金句摘抄 demo。
-- **演示内容**：用户只要求查看或输出泛用演示时，直接交付 9 页《刻意练习》V2。
+- **演示内容**：用户只要求查看或输出泛用演示时，直接交付 9 页《刻意练习》深度萃取 demo。
 - **模式 A｜深度萃取卡**：用户说“吃透一本书、拆书、深度阅读、知识萃取、做完整读书卡”等，执行完整知识萃取流程。
 - **模式 B｜金句摘抄卡**：用户明确说“摘抄金句、摘录内容、提取原句、做金句卡、把这些句子做成卡片”等，只提取可核对的原文或用户提供的摘录，不执行模型、行动、反常识等完整拆书模块。
 - 同时要求两种产物时分别生成两个 HTML，不把金句页硬塞进深度萃取卡。
